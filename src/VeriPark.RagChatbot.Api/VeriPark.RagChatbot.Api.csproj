@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>VeriPark.RagChatbot.Api</RootNamespace>
+    <AssemblyName>VeriPark.RagChatbot.Api</AssemblyName>
+    <!-- Lets `dotnet user-secrets` store the Azure OpenAI key outside the repo -->
+    <UserSecretsId>d3b6b6a0-6f5e-4a1e-9a43-5f7c0b1e7a11</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Floating versions pick the newest compatible release on the first restore.
+         After the first successful build, run `dotnet list package` and pin them (see README). -->
+    <PackageReference Include="CommunityToolkit.VectorData.Qdrant" Version="1.0.0" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.*" />
+    <PackageReference Include="UglyToad.PdfPig" Version="1.7.0-custom-5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="VeriPark.RagChatbot.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="data\**\*.pdf" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

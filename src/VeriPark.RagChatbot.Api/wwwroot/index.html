@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Copilot Studio Licensing Guide Chatbot</title>
+  <style>
+    :root { --bg:#f4f6fb; --card:#fff; --ink:#1b1f2a; --muted:#667085; --accent:#2563eb; --user:#e8efff; --border:#d9dee8; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: Segoe UI, system-ui, sans-serif; background:var(--bg); color:var(--ink); height:100vh; display:flex; flex-direction:column; }
+    header { padding:14px 20px; background:var(--card); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    header h1 { font-size:17px; margin:0; }
+    #status { font-size:13px; color:var(--muted); }
+    button { background:var(--accent); color:#fff; border:0; border-radius:8px; padding:9px 16px; font-size:14px; cursor:pointer; }
+    button.secondary { background:transparent; color:var(--accent); border:1px solid var(--accent); }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    #messages { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; max-width:900px; width:100%; margin:0 auto; }
+    .msg { padding:12px 16px; border-radius:12px; max-width:88%; white-space:pre-wrap; line-height:1.5; font-size:15px; }
+    .user { background:var(--user); align-self:flex-end; }
+    .bot { background:var(--card); border:1px solid var(--border); align-self:flex-start; }
+    .error { background:#fee4e2; border:1px solid #fda29b; align-self:flex-start; }
+    .sources { margin-top:10px; padding-top:8px; border-top:1px dashed var(--border); font-size:12.5px; color:var(--muted); }
+    .sources details { margin-top:4px; }
+    form { display:flex; gap:10px; padding:14px 20px; background:var(--card); border-top:1px solid var(--border); max-width:900px; width:100%; margin:0 auto; }
+    textarea { flex:1; resize:none; border:1px solid var(--border); border-radius:8px; padding:10px; font:inherit; height:48px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Microsoft Copilot Studio Licensing Guide - Chatbot</h1>
+    <div><span id="status">Checking status&hellip;</span> <button id="newChat" class="secondary" type="button">New chat</button></div>
+  </header>
+
+  <div id="messages"></div>
+
+  <form id="chatForm">
+    <textarea id="input" placeholder="Ask a question about the licensing guide..." required></textarea>
+    <button id="send" type="submit">Send</button>
+  </form>
+
+  <script>
+    const messages = document.getElementById('messages');
+    const form = document.getElementById('chatForm');
+    const input = document.getElementById('input');
+    const sendButton = document.getElementById('send');
+    const statusLabel = document.getElementById('status');
+    let conversationId = null;
+
+    function addMessage(kind, text, citations) {
+      const div = document.createElement('div');
+      div.className = 'msg ' + kind;
+      div.textContent = text;
+      if (citations && citations.length) {
+        const sources = document.createElement('div');
+        sources.className = 'sources';
+        sources.textContent = 'Sources: ' + [...new Set(citations.map(c => 'page ' + c.pageNumber))].join(', ');
+        const details = document.createElement('details');
+        const summary = document.createElement('summary');
+        summary.textContent = 'Show retrieved passages';
+        details.appendChild(summary);
+        citations.forEach(c => {
+          const p = document.createElement('div');
+          p.textContent = `p.${c.pageNumber} (score ${c.score}): ${c.snippet}`;
+          details.appendChild(p);
+        });
+        sources.appendChild(details);
+        div.appendChild(sources);
+      }
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    async function refreshStatus() {
+      try {
+        const health = await (await fetch('/health')).json();
+        statusLabel.textContent = health.isReady ? `Ready (${health.chunkCount} chunks)` : `${health.status}${health.error ? ': ' + health.error : ''}`;
+      } catch { statusLabel.textContent = 'Server not reachable'; }
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      addMessage('user', text);
+      input.value = '';
+      sendButton.disabled = true;
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ conversationId, message: text })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          addMessage('error', data.title ? `${data.title} ${data.detail ?? ''}` : 'Request failed.');
+        } else {
+          conversationId = data.conversationId;
+          addMessage('bot', data.answer, data.citations);
+        }
+      } catch (error) {
+        addMessage('error', 'Could not reach the server: ' + error.message);
+      } finally {
+        sendButton.disabled = false;
+        input.focus();
+      }
+    });
+
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); form.requestSubmit(); }
+    });
+
+    document.getElementById('newChat').addEventListener('click', () => {
+      conversationId = null;
+      messages.innerHTML = '';
+      addMessage('bot', 'New conversation started. Ask me anything about the Copilot Studio Licensing Guide.');
+    });
+
+    addMessage('bot', 'Hello! Ask me anything about the Microsoft Copilot Studio Licensing Guide. I answer only from the document and remember our conversation.');
+    refreshStatus();
+    setInterval(refreshStatus, 5000);
+  </script>
+</body>
+</html>

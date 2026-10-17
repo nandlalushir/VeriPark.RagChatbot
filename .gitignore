@@ -1,0 +1,22 @@
+
+# .NET build outputs
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+
+# Secrets and local configuration
+**/appsettings.Development.json
+**/appsettings.Local.json
+secrets.json
+.env
+.env.*
+
+# Local databases and logs
+*.db
+*.sqlite
+*.log
+
+# IDE files
+.idea/

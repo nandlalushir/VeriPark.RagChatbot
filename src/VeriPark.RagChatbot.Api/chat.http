@@ -1,0 +1,28 @@
+### Health / ingestion status
+GET http://localhost:5080/health
+
+### Ask a first question (a new conversation is created)
+POST http://localhost:5080/api/chat
+Content-Type: application/json
+
+{
+  "message": "What is a Copilot Credit?"
+}
+
+### Ask a follow-up (copy the conversationId from the previous response)
+POST http://localhost:5080/api/chat
+Content-Type: application/json
+
+{
+  "conversationId": "PASTE-ID-HERE",
+  "message": "And how much does the pay-as-you-go meter cost per credit?"
+}
+
+### Show the stored history of a conversation
+GET http://localhost:5080/api/conversations/PASTE-ID-HERE
+
+### Delete a conversation
+DELETE http://localhost:5080/api/conversations/PASTE-ID-HERE
+
+### Re-run ingestion (force = delete and rebuild the Qdrant collection)
+POST http://localhost:5080/api/ingest?force=true
