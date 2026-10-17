@@ -224,3 +224,4 @@ Cosine similarity, top **8** chunks, minimum score **0.2**. Eight is generous on
 ---
 #   V e r i P a r k . R a g C h a t b o t  
  # VeriPark.RagChatbot
+# VeriPark.RagChatbot
